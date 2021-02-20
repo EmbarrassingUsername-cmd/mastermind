@@ -2,8 +2,6 @@
 
 # contains common code bewtween Code Make and Breaker
 module Code
-  attr_reader :code
-
   def check_code(guess, code = @code)
     guess_test = code.split('')
     guess_result = guess.split('').each_with_object([]) do |number, array|
@@ -25,15 +23,14 @@ module Code
   def choices
     return '1122' if @guesses.zero?
 
-    @possible_codes.sample
+    @set.sample
   end
 end
 
 # user selects to break the code will create random code and play game
 class CodeBreaker
-  attr_reader :code
-
   include Code
+
   def initialize
     super
     @code = [rand(1..6), rand(1..6), rand(1..6), rand(1..6)].join
@@ -46,7 +43,6 @@ class CodeMaker
 
   def initialize
     @all_codes = [*1..6].product(*[[*1..6]] * 3).map(&:join)
-    @all_codes.to_set
   end
 
   def solve(code)
@@ -55,16 +51,16 @@ class CodeMaker
     @guesses = 0
     until @guesses == 10
       computer_guess = choices
-      p @guesses += 1
-      p result_array = check_code(computer_guess)
+      @guesses += 1
+      result_array = check_code(computer_guess)
+      puts "Guess: #{@guesses} \nThe computer's guess is #{computer_guess} \nThe result is #{result_array}"
       break if result_array == %w[O O O O]
 
       @set.dup.each do |test_case|
-        p test_case
-        p result = check_code(test_case, computer_guess)
+        result = check_code(test_case, computer_guess)
         @set.delete(test_case) unless result_array == result
       end
-      p @set
+
     end
   end
 end
@@ -96,7 +92,6 @@ def confirm_valid(entry)
 end
 
 def start_game_maker
-  puts 'Please wait while the game initialises'
   test_code = CodeMaker.new
   play_game_maker(test_code)
 end
@@ -104,9 +99,9 @@ end
 def play_game_maker(test_code)
   try_again = ''
   until try_again == 'n'
-    puts 'please enter code'
+    puts 'Please enter code'
     test_code.solve confirm_valid(gets.chomp)
-    puts 'type n to give up'
+    puts 'Type n to give up'
     try_again = gets.chomp.downcase
   end
 end
@@ -116,6 +111,15 @@ def start_game
   start_game_breaker if choice == '1'
   start_game_maker if choice == '2'
 end
-
+puts <<~HEREDOC
+  Welcome to Mastermind you have the choice to set a code for the computer to break.
+  Or you can try to break the computer's code.
+  You will use 123456 to represent the coloured pegs in mastermind.
+  Each code is a selection of 4 pegs and each round you will guess the code
+  You will receive a prompt after enterring the code containing up to 4 symbols
+  An O means you have the right number in the right spot
+  An X means you have the right number in the wrong spot
+  Use these hints to solve the code and see if you can do better than the computer
+HEREDOC
 puts 'Would you like to solve or create 1 for solve 2 to create'
 start_game
